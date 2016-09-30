@@ -40,7 +40,7 @@ gulp.task('build',['clean','client_lib','less','templates','client','server']);
 
 gulp.task('watch',function(){
   gulp.watch(['src/server/*.js'],['server']);
-  gulp.watch(['src/client/**.jsx','src/client/**.js'],['server']);
+  gulp.watch(['src/client/views/*.jsx','src/client/**.js'],['client']);
   gulp.watch(['src/client/*.less'],['less']);
   gulp.watch(['src/client/*.pug'],['templates']);
 })
