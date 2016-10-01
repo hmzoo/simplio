@@ -6,6 +6,9 @@ var mainView = {
     on: function(actionName, action) {
         this[actionName] = action;
     },
+    joinRoom:function(t){},
+    sendMessage:function(t){},
+    
     setUserName:function(t){
       simpleChat.setUserName(t);
     }
@@ -16,16 +19,26 @@ var mainView = {
 
     setInfos:function(t){
       simpleChat.setInfos(t);
+    },
+    newMessage:function(d){
+      simpleChat.newMessage(d);
+    },
+    setUsersList:function(l){
+      simpleChat.setUsersList(l);
     }
 
 };
 
-var test=function(t){
-  console.log(t);
+var joinRoom=function(t){
+  mainView.joinRoom(t);
+}
+var sendMessage=function(t){
+  mainView.sendMessage(t);
 }
 
+
 var simpleChat = ReactDOM.render(
-  <SimpleChat onJoinRoom={test}/>, document.getElementById('chat'));
+  <SimpleChat onJoinRoom={joinRoom} onSendMessage={sendMessage}/>, document.getElementById('chat'));
 
 
 

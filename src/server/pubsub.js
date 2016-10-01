@@ -3,19 +3,21 @@ var redis = require('redis');
 var sub = redis.createClient();
 var pub = redis.createClient();
 
-sub.subscribe('sio');
-sub.subscribe('messaging');
+sub.subscribe('iops');
 
 sub.on('message', function(channel, message) {
     var data = JSON.parse(message);
-    switch (channel) {
 
-        case 'messaging':
+    switch (data.action) {
 
-            if (data && data.user && data.room && data.content) {
-
-                ps.roomMessage(data);
-            }
+        case 'roomMessage':
+            ps.roomMessage(data);
+            break;
+        case 'userJoin':
+            ps.userJoin(data);
+            break;
+        case 'userLeave':
+            ps.userLeave(data);
             break;
         default:
             console.log(channel, JSON.parse(message));
@@ -28,14 +30,12 @@ var ps = {
         this[actionName] = action;
     },
     roomMessage: function(data) {},
+    userJoin: function(data) {},
+    userLive: function(data) {},
 
-
-
-    pubRoomMessage: function(data) {
-        pub.publish('messaging', JSON.stringify(data));
+    pub: function(data) {
+        pub.publish('iops', JSON.stringify(data));
     }
-
-
 
 }
 

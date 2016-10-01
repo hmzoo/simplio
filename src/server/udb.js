@@ -2,58 +2,77 @@ var redis = require('redis');
 
 var dbClient = redis.createClient();
 
+var randnum = function(data, cpt) {
+    var cpt = (typeof cpt === 'undefined')
+        ? 0
+        : cpt;
+    if (cpt > 50) {
+        return;
+    }
+    data.user = (Math.floor(Math.random() * 90000) + 10000).toString();
+    dbClient.hexists('user:' + data.user, function(err, exists) {
+        if (exists) {
+            randnum(data, cpt++);
+        } else {
+            udb.registerUser(data);
+        }
+    });
+}
 
-var randnum = function(data,cpt) {
-        var cpt = (typeof cpt === 'undefined') ? 0 : cpt;
-        if (cpt > 50) {
+var udb = {
+    on: function(actionName, action) {
+        this[actionName] = action;
+    },
+    newUser: function(data) {},
+    userJoinRoom: function(data) {},
+    userLeaveRoom: function(data) {},
+
+    registerUser: function(data) {
+
+        if (!data.user) {
+            randnum(data);
             return;
         }
-        data.name = (Math.floor(Math.random() * 90000) + 10000).toString();
-        dbClient.hexists('users', data.name, function(err, exists) {
-                if (exists) {
-                      randnum(data,cpt++);
-                }else{
-                    udb.registerUser(data);
-                }
+
+        dbClient.set('sid:' + data.sid, data.user);
+        dbClient.hmset('user:' + data.user, {
+            sid: data.sid,
+            room:""
+        }, function(err, reply) {
+          console.log(err);
         });
-      }
 
-        var udb = {
-            on: function(actionName, action) {
-                this[actionName] = action;
-            },
-            newUser: function(data) {},
-
-
-
-            registerUser: function(data) {
-
-                if(!data.name){
-                  randnum(data);
-                  return;
-                }
-
-
-                dbClient.hset('users', data.name, data.sid)
-                dbClient.hmset('user:' + data.sid, {
-                    name: data.name
-                }, function(err, reply) {
-                    dbClient.hgetall('user:' + data.sid, function(err, reply) {
-                        console.log(err);
-                        console.log(reply);
-                    });
-
-                    dbClient.hgetall('users', function(err, reply) {
-                        console.log(err);
-                        console.log(reply);
-                    });
+        udb.newUser(data);
+    },
+    unRegisterUser: function(data) {
+        
+        dbClient.get("sid:" + data.sid, function(err, reply) {
+            if (reply) {
+                dbClient.del('sid:' + data.sid);
+                data.user=reply;
+                console.log(reply);
+                dbClient.hmget('user:' + reply,'room',function(err,reply) {
+                  if(reply&&reply[0]){
+                    data.room=reply[0];
+                    udb.userLeaveRoom(data);
+                  }
                 });
-
-                udb.newUser(data);
             }
+        });
+    },
+    userJoiningRoom: function(data) {
+        dbClient.get("sid:" + data.sid, function(err, reply) {
+            if (reply) {
+                data.user=reply;
+                dbClient.hmset('user:' + reply, {
+                    room: data.room
+                }, function(err, reply) {
+                    udb.userJoinRoom(data);
+                });
+            }
+        });
+    }
 
+}
 
-
-        }
-
-        module.exports = udb;
+module.exports = udb;

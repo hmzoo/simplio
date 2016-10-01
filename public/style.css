@@ -7010,3 +7010,7 @@ input[type="submit"].btn-round {
     width: 91.6666666% !important;
   }
 }
+#textbox {
+  height: 300px;
+  color: #668888;
+}
