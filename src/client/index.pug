@@ -1,16 +1,17 @@
 doctype html
-html(lang="en")
+html(lang='en')
   head
-    title= siteTitle
-    link(rel='shortcut icon', href='./favicon.png', type='image/x-icon')
-    link(href='./style.css', rel='stylesheet')
-    script(src='./socket.io.js')
-    script(src='./react.js')
-    script(src='./react-dom.js')
-
-
+    meta(charset='utf-8')
+    title index.html
+    meta(name='description', content='Simple page')
+    meta(name='author', content='HMJ')
+    link(rel='stylesheet', href='./style.css')
+    script(src='./lib/react.js')
+    script(src='./lib/react-dom.js')
+    script(src='./lib/socket.io.js')
+    
   body
-    h6 Test
-    #chat
-
-    script(src='main.js')
+    button.btn(type='submit', onclick='test();') Test
+    hr
+    #simplechat
+    script(src='./main.js')
