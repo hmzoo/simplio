@@ -3,25 +3,42 @@ var helmet = require('helmet');
 var app = express();
 var server = require('http').Server(app);
 
+var Session = require('express-session');
+var RedisStore=require('connect-redis')(Session);
+var session=Session({store:new RedisStore(), key:'jsessionid', secret:'simplioSecret', resave:true,saveUninitialized:true});
+
 app.use(helmet());
+app.use(session);
 app.use(express.static(__dirname + '/dist'));
 
 server.listen(8080);
 console.log("Server started, listening on 8080 ...");
 
 var socketio = require('socket.io');
+var ios = require('socket.io-express-session');
 var io = socketio.listen(server);
+io.use(ios(session, {autoSave: true}));
 
 io.on('connection', function(client) {
     console.log('Client connected ' + client.id);
+    if (!client.handshake.session) {
+      console.log('Client session error ' + client.id);
+      return;
+    }
 
     client.on('disconnect', function() {
         console.log('Client disconnected ' + client.id);
     });
 
-    client.on('nameRequest', function() {
-        console.log('Name request from' + client.id );
-        newClient(client.id);
+    client.on('nameRequest', function(name) {
+        console.log('Name request from' + client.id);
+        if (!client.handshake.session.user) {
+          db.newClient(client.id);
+          return;
+        }
+        console.log("updating client "+client.handshake.session.user);
+        db.updateClient(client.id,client.handshake.session.user);
+
     });
 
     client.on('roomRequest', function(data) {
@@ -40,34 +57,20 @@ io.on('connection', function(client) {
 
 });
 
-var redis = require('redis');
-var dbClient = redis.createClient();
 
-var newClient = function(sid, cpt) {
-    if (typeof cpt === 'undefined') {
-        cpt = 0;
+var sender = {
+    sendNameAtribued(sid, name) {
+      var s = io.sockets.connected[sid];
+      if (!s||!s.handshake.session) {return ;}    
+        s.handshake.session.user = name;
+        s.handshake.session.save();
+        s.emit("nameAttribued", {
+            name: name
+        });
     }
-    if (cpt > 50) {
-        return;
-    }
-    console.log(cpt);
-    var rname = (Math.floor(Math.random() * 90000) + 10000).toString();
-    dbClient.hexists('user:' + rname, function(err, exists) {
-        if (exists) {
-            newClient(sid, cpt++);
-        } else {
-            dbClient.set('sid:' + sid, rname);
-            dbClient.hmset('user:' + rname, {
-                sid: sid,
-                room: ""
-            }, function(err, reply) {
-              console.log(err,reply);
-                if(!err){
-                  var s = io.sockets.connected[sid];
-                  s.emit("nameAttribued", {name:rname});
-                }
-            });
-        }
-    });
 
-}
+
+};
+
+
+var db = require("./db.js")(sender);
