@@ -9,6 +9,18 @@ module.exports = function(sender) {
     var self = {};
     var sender = sender;
 
+    var getUserBySid = function(sid) {
+        return new Promise(function(resolve, reject) {
+            dbClient.get('sid:' + sid, function(err, reply) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(reply);
+                }
+            });
+        });
+    }
+
     self.newClient = function(sid, cpt) {
         if (typeof cpt === 'undefined') {
             cpt = 0;
