@@ -9,6 +9,8 @@ module.exports = function(sender) {
     var self = {};
     var sender = sender;
 
+
+
     var getUserBySid = function(sid) {
         return new Promise(function(resolve, reject) {
             dbClient.get('sid:' + sid, function(err, reply) {

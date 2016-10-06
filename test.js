@@ -47,10 +47,7 @@ var setSid = function(sid, name) {
                 reject("db error");
             };
             if (reply == "OK") {
-                resolve({
-                    sid: sid,
-                    name: name
-                })
+                resolve(name);
             } else {
                 reject("sid:" + sid + " not saved");
             }
@@ -73,32 +70,37 @@ var delSid = function(sid) {
     });
 }
 
-var newUser = function(sid) {
-    var pname=getAName();
-    var psid=pname.then(function(result){return setSid(sid,result);});
-    return psid.then(function(result){return setUser(result.name,{sid:result.sid});});
-
-}
-
-var setUser = function(name, data) {
+var setSidRoom = function(sid,room) {
     return new Promise(function(resolve, reject) {
-        dbClient.hmset('user:' + name, data, function(err, reply) {
+        dbClient.getset('sid:' + sid+":room",room, function(err, reply) {
             if (err) {
                 reject("db error");
-            };
-            if (reply == "OK") {
-                resolve({
-                    name: name,
-                    data: data
-                })
+            }
+            if (reply) {
+                resolve(reply);
             } else {
-                reject("user:" + user + " not saved");
+                reject("user:" + user + " no room");
             }
         });
     });
 }
 
-var getUserBySid = function(sid) {
+var delSidRoom = function(sid) {
+    return new Promise(function(resolve, reject) {
+        dbClient.del('sid:' + sid+":room", function(err, reply) {
+            if (err) {
+                reject("db error");
+            };
+            if (reply > 0) {
+                resolve(sid)
+            } else {
+                reject("sid:" + sid + " not in db");
+            }
+        });
+    });
+}
+
+var getName = function(sid) {
     return new Promise(function(resolve, reject) {
         dbClient.get('sid:' + sid, function(err, reply) {
             if (err) {
@@ -112,6 +114,27 @@ var getUserBySid = function(sid) {
         });
     });
 }
+
+
+var setUser = function(name, data) {
+    return new Promise(function(resolve, reject) {
+        dbClient.hmset('user:' + name, data, function(err, reply) {
+            if (err) {
+                reject("db error");
+            };
+            if (reply == "OK") {
+                resolve({
+                    name: name,
+                    data: data,
+                })
+            } else {
+                reject("user:" + user + " not saved");
+            }
+        });
+    });
+}
+
+
 
 var getUser = function(user) {
     return new Promise(function(resolve, reject) {
@@ -127,6 +150,61 @@ var getUser = function(user) {
         });
     });
 }
+
+var addUserSid = function(user,sid) {
+    return new Promise(function(resolve, reject) {
+        dbClient.lpush('user:'+ user+':sids',sid, function(err, reply) {
+            if (err) {
+                reject("db error");
+            }
+                resolve(reply);
+        });
+    });
+}
+
+var deleteUserSid = function(user,sid) {
+    return new Promise(function(resolve, reject) {
+        dbClient.lrem('user:'+ user+':sids',0,sid, function(err, reply) {
+            if (err) {
+                reject("db error");
+            }
+                resolve(reply);
+        });
+    });
+}
+
+var getUserSids = function(user){
+
+  return new Promise(function(resolve, reject) {
+      dbClient.lrange('user:'+ user+':sids',0,-1, function(err, reply) {
+          if (err) {
+              reject("db error");
+          }
+              resolve(reply);
+      });
+  });
+
+}
+
+
+var getUserBySid=function(sid){
+  return getName(sid).then(getUser);
+}
+
+var newUser = function(sid) {
+    var pname=getAName();
+    var psid=pname.then(function(result){return setSid(sid,result);});
+    return psid.then(function(result){return setUser(result,{updatedAt: Date.now()});});
+
+}
+
+
+var createUser=function(sid){}
+var newUserSid=function(sid,user){}
+var removeSid=function(sid){}
+var joinRoom=function(sid,room){}
+var newMessage=function(sid,message){}
+
 /*
 getUserBySid("/#yMBuGx9Oj0BNdsLbAAAB").then(function(result) {
     console.log(result)
@@ -185,8 +263,14 @@ getAName().then(function(result) {
 }).catch(function(e) {
     console.log(e);
 });
-*/
+
 newUser("/#yMBuGx9Oj0BNdsLbAAABTTX").then(function(result) {
+    console.log(result);
+}).catch(function(e) {
+    console.log(e);
+});
+*/
+getUserRoom("75301").then(function(result) {
     console.log(result);
 }).catch(function(e) {
     console.log(e);
