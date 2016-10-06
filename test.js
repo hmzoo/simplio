@@ -7,7 +7,22 @@ dbClient.on("error", function(err) {
     console.error("Error connecting to redis", err);
 });
 
-var getAName = function(cpt) {
+/*DB
+sid:ID userName
+sid:ID:room roomName
+user:ID {createdAt }
+user:ID:sids [sid sid sid]
+room:ID {createdAt}
+room:ID:users [user user user]
+
+newUser(sid)
+newUserSid(sid,name)
+removeSid(sid)
+joinRoom(sid,room)
+
+*/
+
+var getRName = function(cpt) {
     var cpt = cpt || 0;
     if (cpt > 30) {
         throw new Error("No more place free !!");
@@ -100,9 +115,23 @@ var delSidRoom = function(sid) {
     });
 }
 
-var getName = function(sid) {
+var getSidName = function(sid) {
     return new Promise(function(resolve, reject) {
         dbClient.get('sid:' + sid, function(err, reply) {
+            if (err) {
+                reject("db error");
+            };
+            if (reply) {
+                resolve(reply)
+            } else {
+                reject("sid:" + sid + " no data");
+            }
+        });
+    });
+}
+var getSidRoom = function(sid) {
+    return new Promise(function(resolve, reject) {
+        dbClient.get('sid:' + sid+'room', function(err, reply) {
             if (err) {
                 reject("db error");
             };
@@ -123,10 +152,7 @@ var setUser = function(name, data) {
                 reject("db error");
             };
             if (reply == "OK") {
-                resolve({
-                    name: name,
-                    data: data,
-                })
+                resolve(name);
             } else {
                 reject("user:" + user + " not saved");
             }
@@ -168,7 +194,7 @@ var deleteUserSid = function(user,sid) {
             if (err) {
                 reject("db error");
             }
-                resolve(reply);
+                resolve(sid);
         });
     });
 }
@@ -192,86 +218,21 @@ var getUserBySid=function(sid){
 }
 
 var newUser = function(sid) {
-    var pname=getAName();
-    var psid=pname.then(function(result){return setSid(sid,result);});
-    return psid.then(function(result){return setUser(result,{updatedAt: Date.now()});});
-
+    var prname=getRName();
+    var psid=prname.then(function(result){return setSid(sid,result);});
+    var pname= psid.then(function(result){return setUser(result,{updatedAt: Date.now()});});
+    pname.then(function(result){console.log(sid,result);});
 }
 
+var newUserSid=function(sid,user){
+  addUserSid(sid,user).then(function(result){console.log(sid,user);});
+}
 
-var createUser=function(sid){}
-var newUserSid=function(sid,user){}
-var removeSid=function(sid){}
+var removeSid=function(sid){
+  var name;
+  var room;
+  var pdelusersid=getSidName(sid).then(function(result){name=result;return deleteUserSid(sid,result)});
+  var pdelroomsid=getUserSids(name)pdelusersid.then(function(result){console.log(name,result);return getUserSids(name);});
+  pdelusersid.then(delSidRoom).then(function(result){console.log(user,room);});
+}
 var joinRoom=function(sid,room){}
-var newMessage=function(sid,message){}
-
-/*
-getUserBySid("/#yMBuGx9Oj0BNdsLbAAAB").then(function(result) {
-    console.log(result)
-}).catch(function(e) {
-    console.log(e);
-});
-getUserBySid("/#yMBuGx9Oj0BNdsLbAAABX").then(function(result) {
-    console.log(result)
-}).catch(function(e) {
-    console.log(e);
-});
-getUser('25358').then(function(result) {
-    console.log(result)
-}).catch(function(e) {
-    console.log(e)
-});
-getUser('25359').then(function(result) {
-    console.log(result)
-}).catch(function(e) {
-    console.log(e)
-});
-getUserBySid("/#yMBuGx9Oj0BNdsLbAAABX").then(getUser).then(function(result) {
-    console.log(result)
-}).catch(function(e) {
-    console.log(e);
-});
-setSid("oketo", "test").then(function(result) {
-    console.log(result)
-}).catch(function(e) {
-    console.log(e);
-});
-setUser("truc", {
-    sid: "test"
-}).then(function(result) {
-    console.log(result)
-}).catch(function(e) {
-    console.log(e);
-});
-delSid("/#5sH5J_fAKGzklT0dAAAE").then(function(result) {
-    console.log(result)
-}).catch(function(e) {
-    console.log(e);
-});
-getAName().then(function(result) {
-    console.log(result)
-}).catch(function(e) {
-    console.log(e);
-});
-getAName().then(function(result) {
-    console.log(result)
-}).catch(function(e) {
-    console.log(e);
-});
-getAName().then(function(result) {
-    console.log(result)
-}).catch(function(e) {
-    console.log(e);
-});
-
-newUser("/#yMBuGx9Oj0BNdsLbAAABTTX").then(function(result) {
-    console.log(result);
-}).catch(function(e) {
-    console.log(e);
-});
-*/
-getUserRoom("75301").then(function(result) {
-    console.log(result);
-}).catch(function(e) {
-    console.log(e);
-});
