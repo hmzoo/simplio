@@ -7,18 +7,36 @@ var roomName='';
 socket.on('connect', function() {
     console.log('Connected successfully to the socket.io server.');
     socket.emit('nameRequest');
+    if(roomName){
+      socket.emit('roomRequest',{room:roomName});
+    }
 });
 socket.on('nameAttribued', function(data) {
+
   if(!data||!data.name){return;}
     setUserName(data.name);
 });
 socket.on('roomMessage', function(data) {
-  if(!data||!data.user||!data.message){return;}
-    newMessage(data.user,data.message);
+  if(!data||!data.name||!data.message){return;}
+    newMessage(data.name,data.message);
 });
 socket.on('roomJoined', function(data) {
   if(!data||!data.room){return;}
+  cleanUsers();
     setRoomName(data.room);
+    if(data.users){
+      for (u of data.users) {
+        addUser(u);
+      }
+    }
+});
+socket.on('userJoin', function(data) {
+  if(!data||!data.name){return;}
+    addUser(data.name);
+});
+socket.on('userLeave', function(data) {
+  if(!data||!data.name){return;}
+    removeUser(data.name);
 });
 
 
@@ -43,6 +61,9 @@ var setRoomName=function(t){
 }
 var newMessage=function(u,t){
   simpleChat.newMessage(u,t);
+}
+var cleanUsers=function(u){
+  simpleChat.cleanUsers(u);
 }
 var addUser=function(u){
   simpleChat.addUser(u);

@@ -40,6 +40,9 @@ var SimpleChat = React.createClass({
         ]);
         this.setState({messages: msgs});
     },
+    cleanUsers: function() {
+        this.setState({users: []});
+    },
     addUser: function(user) {
         if (this.state.users.indexOf(user) != -1) {
             return;

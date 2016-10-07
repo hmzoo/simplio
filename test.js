@@ -16,9 +16,32 @@ room:ID {createdAt}
 room:ID:users [user user user]
 
 newUser(sid)
+  get random name
+  set sid:sid name
+  set user:user {}
+  add to user:name:sids sid
+  get user:name:sids sids
+  notify nameAttribued sids name
 newUserSid(sid,name)
+  set sid:sid name
+  add to user:name:sids sid
+  get user:name:sids sids
+  notify nameAttribued sids name
 removeSid(sid)
+  leaveRoom(sid)
+  get sid:sid name
+  remove form user:name:sids sid
+  remove sid:sid
+
 joinRoom(sid,room)
+  leaveRoom(sid)
+  get sid:sid name
+  set sid:sid:room room
+  notify userJoin room name
+leaveRoom(sid)
+  get sid:sid name
+  remove sid:sid:room room
+  notify userLeave room name
 
 */
 
