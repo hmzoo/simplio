@@ -1,0 +1,9 @@
+---
+# simplio manifest
+applications:
+- name: simplio
+  memory: 256MB
+  buildpack: nodejs_buildpack
+  instances: 2
+  services:
+  - redis_instance

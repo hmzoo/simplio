@@ -1,10 +1,9 @@
-var cfEnv = require("cfenv");
-var appEnv = cfEnv.getAppEnv();
-var redisCredentials = appEnv.getServiceCreds("redis_instance");
-var redis = require('redis');
+var rc = require('./rc.js');
 
-var sub = redis.createClient(redisCredentials);
-var pub = redis.createClient(redisCredentials);
+
+
+var sub = rc();
+var pub = rc();
 
 sub.subscribe('iops');
 
