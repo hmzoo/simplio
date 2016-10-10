@@ -1,8 +1,11 @@
 var redis = require('redis');
+var cfEnv = require("cfenv");
+var appEnv = cfEnv.getAppEnv();
+var redisCredentials = appEnv.getServiceCreds("redis_instance");
 var Promise = require("bluebird");
 //Promise.promisifyAll(redis.RedisClient.prototype);
 //Promise.promisifyAll(redis.Multi.prototype);
-var dbClient = redis.createClient();
+var dbClient = redis.createClient(redisCredentials||{});
 
 var db = {};
 

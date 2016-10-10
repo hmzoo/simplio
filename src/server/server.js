@@ -1,5 +1,6 @@
-var cfenv = require("cfenv");
-var appEnv = cfenv.getAppEnv();
+var cfEnv = require("cfenv");
+var appEnv = cfEnv.getAppEnv();
+var redisCredentials = appEnv.getServiceCreds("redis_instance");
 
 var express = require('express');
 var helmet = require('helmet');
@@ -9,7 +10,7 @@ var server = require('http').Server(app);
 var Session = require('express-session');
 var RedisStore = require('connect-redis')(Session);
 var session = Session({
-    store: new RedisStore(),
+    store: new RedisStore(redisCredentials),
     key: 'jsessionid',
     secret: 'simplioSecret',
     resave: true,
@@ -20,9 +21,9 @@ app.use(helmet());
 app.use(session);
 app.use(express.static(__dirname + '/dist'));
 
-var port = process.env.PORT || process.env.VCAP_APP_PORT || '3000';
-server.listen(port);
-console.log("Server started, listening on "+port+" ...");
+
+server.listen(appEnv.port);
+console.log("Server started, listening on "+appEnv.bind+" port: " +appEnv.port+" ...");
 
 var db = require("./db.js");
 var ps = require("./ps.js");
