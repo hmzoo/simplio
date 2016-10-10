@@ -17,8 +17,9 @@ app.use(helmet());
 app.use(session);
 app.use(express.static(__dirname + '/dist'));
 
-server.listen(8080);
-console.log("Server started, listening on 8080 ...");
+var port = process.env.PORT || process.env.VCAP_APP_PORT || '3000';
+server.listen(port);
+console.log("Server started, listening on "+port+" ...");
 
 var db = require("./db.js");
 var ps = require("./ps.js");
