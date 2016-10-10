@@ -20,11 +20,18 @@ var SimpleChat = React.createClass({
             messages: [],
             users: [],
             messageInputValue: '',
-            roomInputValue: ''
+            roomInputValue: '',
+            roomReady: false
         };
+    },
+    setInfos: function(t) {
+        this.setState({infos: t});
     },
     setRoomName: function(room) {
         this.setState({roomName: room});
+        if (this.state.roomName != '') {
+            this.setState({roomReady: true});
+        }
     },
     setUserName: function(user) {
         this.setState({userName: user});
@@ -40,8 +47,8 @@ var SimpleChat = React.createClass({
         ]);
         this.setState({messages: msgs});
     },
-    cleanUsers: function() {
-        this.setState({users: []});
+    cleanRoom: function() {
+        this.setState({users: [], messages: [], roomName: '', roomReady: false, infos:""});
     },
     addUser: function(user) {
         if (this.state.users.indexOf(user) != -1) {
@@ -80,74 +87,118 @@ var SimpleChat = React.createClass({
     },
 
     render: function() {
-        return (
-            <div>
-                <div className="grid">
-                    <div className="grid-item 8/12 bord">
-                        <div id="roomTitle">
-                            <h4>{this.state.roomName}</h4>
-                        </div>
-                    </div>
-                    <div className="grid-item 4/12 bord">
 
-                        <div className="grid gutter-0 " id="joinroom">
-                            <form action="" onSubmit={this.handleSubmitRoomForm}>
-                                <div className="grid-item 8/12 bord">
-                                    <input id="msginput" className="form-input wrapper" type="text" placeholder="Room name" onChange={this.onChangeRoomInput}></input>
-                                </div>
-                                <div className="grid-item 4/12 bord">
-                                    <button type="submit" className="btn  btn-primary wrapper ">join</button>
-                                </div>
-                            </form>
+        if (this.state.roomReady) {
+            return (
+                <div>
+                    <div className="grid">
+                        <div className="grid-item 8/12 bord">
+                            <div id="roomTitle">
+                                <h4>{this.state.roomName}</h4>
+                            </div>
                         </div>
-                    </div>
-                </div>
+                        <div className="grid-item 4/12 bord">
 
-                <div className="grid">
-                    <div className="grid-item 10/12 bord">
-                        <div id="messages">
-                            {this.state.messages.map(function(result) {
-                                return (<MessageItem key={result.id} user={result.user} content={result.content}/>);
-                            })}
-                        </div>
-                    </div>
-                    <div className="grid-item 2/12 bord">
-                        <div id="userslist">
-                            {this.state.users.map(function(result) {
-
-                                return (
-                                    <div className="useritem" key={result}>{result}
+                            <div className="grid gutter-0 " id="joinroom">
+                                <form action="" onSubmit={this.handleSubmitRoomForm}>
+                                    <div className="grid-item 8/12 bord">
+                                        <input id="msginput" className="form-input wrapper" type="text" placeholder="Room name" onChange={this.onChangeRoomInput}></input>
                                     </div>
-                                );
-                            })}
-
-                        </div>
-                    </div>
-                </div>
-                <div className="grid">
-                    <div className="grid-item 10/12 bord">
-                        <div id="sendmessage">
-                            <div className="grid gutter-0 " id="sendmessage">
-                                <form action="" onSubmit={this.handleSubmitMessageForm} autoComplete="off">
-                                    <div className="grid-item 10/12 bord">
-                                        <input id="msginput" className="form-input wrapper" type="text" placeholder="Type here" autoComplete="off" onChange={this.onChangeMessageInput}></input>
-                                    </div>
-                                    <div className="grid-item 2/12 bord">
-                                        <button type="submit" className="btn  btn-primary wrapper ">send</button>
+                                    <div className="grid-item 4/12 bord">
+                                        <button type="submit" className="btn  btn-primary wrapper ">join</button>
                                     </div>
                                 </form>
                             </div>
                         </div>
                     </div>
-                    <div className="grid-item 2/12 bord">
-                        <div id="userid">
-                            <div className="useritem">
-                                {this.state.userName}</div>
+
+                    <div className="grid">
+                        <div className="grid-item 10/12 bord">
+                            <div id="messages">
+                                {this.state.messages.map(function(result) {
+                                    return (<MessageItem key={result.id} user={result.user} content={result.content}/>);
+                                })}
+                            </div>
+                        </div>
+                        <div className="grid-item 2/12 bord">
+                            <div id="userslist">
+                                {this.state.users.map(function(result) {
+
+                                    return (
+                                        <div className="useritem" key={result}>{result}
+                                        </div>
+                                    );
+                                })}
+
+                            </div>
+                        </div>
+                    </div>
+                    <div className="grid">
+                        <div className="grid-item 10/12 bord">
+                            <div id="sendmessage">
+                                <div className="grid gutter-0 " id="sendmessage">
+                                    <form action="" onSubmit={this.handleSubmitMessageForm} autoComplete="off">
+                                        <div className="grid-item 10/12 bord">
+                                            <input id="msginput" className="form-input wrapper" type="text" placeholder="Type here" autoComplete="off" onChange={this.onChangeMessageInput}></input>
+                                        </div>
+                                        <div className="grid-item 2/12 bord">
+                                            <button type="submit" className="btn  btn-primary wrapper ">send</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="grid-item 2/12 bord">
+                            <div id="userid">
+                                <div className="useritem">
+                                    {this.state.userName}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        );
+            );
+        } else {
+            var infoElement;
+
+            if (this.state.infos != "") {
+
+                infoElement = (
+                    <div className="box wrapper">{this.state.infos}</div>
+                );
+            }
+            return (
+                <div>
+                    <div className="grid">
+                        <div className="grid-item 4/12 bord">
+                            <div id="roomTitle">
+                                <h4>Join a room
+                                </h4>
+                            </div>
+                        </div>
+                        <div className="grid-item 8/12 bord">
+
+                            <div className="grid gutter-0 " id="joinroom">
+                                <form action="" onSubmit={this.handleSubmitRoomForm}>
+                                    <div className="grid-item 8/12 bord">
+                                        <input id="msginput" className="form-input wrapper" type="text" placeholder="Room name" onChange={this.onChangeRoomInput}></input>
+                                    </div>
+                                    <div className="grid-item 4/12 bord">
+                                        <button type="submit" className="btn  btn-primary wrapper ">join</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="grid">
+
+                        <div className="grid-item 12/12">
+                            {infoElement}
+                        </div>
+
+                    </div>
+                </div>
+            );
+        }
     }
 });
 

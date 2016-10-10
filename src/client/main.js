@@ -11,6 +11,12 @@ socket.on('connect', function() {
       socket.emit('roomRequest',{room:roomName});
     }
 });
+socket.on('disconnect', function() {
+    console.log('Socket.io server disconnected ');
+    cleanRoom();
+    setInfos("Disconnected ...");
+});
+
 socket.on('nameAttribued', function(data) {
 
   if(!data||!data.name){return;}
@@ -22,7 +28,8 @@ socket.on('roomMessage', function(data) {
 });
 socket.on('roomJoined', function(data) {
   if(!data||!data.room){return;}
-  cleanUsers();
+  console.log("Room joined : "+data.room);
+  cleanRoom();
     setRoomName(data.room);
     if(data.users){
       for (u of data.users) {
@@ -54,16 +61,19 @@ var setUserName=function(t){
   simpleChat.setUserName(t);
 
 }
+var setInfos=function(t){
+
+  simpleChat.setInfos(t);
+}
 var setRoomName=function(t){
-  if(t==roomName){return;}
   roomName=(t);
   simpleChat.setRoomName(t);
 }
 var newMessage=function(u,t){
   simpleChat.newMessage(u,t);
 }
-var cleanUsers=function(u){
-  simpleChat.cleanUsers(u);
+var cleanRoom=function(){
+  simpleChat.cleanRoom();
 }
 var addUser=function(u){
   simpleChat.addUser(u);

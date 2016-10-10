@@ -204,7 +204,7 @@ var removeRoomUser = function(room, user) {
             if (err) {
                 reject("db error");
             }
-            resolve(sid);
+            resolve(reply);
         });
     });
 }

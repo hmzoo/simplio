@@ -5,13 +5,15 @@ html(lang='en')
     title index.html
     meta(name='description', content='Simple page')
     meta(name='author', content='HMJ')
+    link(rel='shortcut icon', href='./favicon.png', type='image/x-icon')
     link(rel='stylesheet', href='./style.css')
     script(src='./lib/react.js')
     script(src='./lib/react-dom.js')
     script(src='./lib/socket.io.js')
-    
+
   body
-    button.btn(type='submit', onclick='test();') Test
+    
     hr
     #simplechat
+    hr
     script(src='./main.js')
