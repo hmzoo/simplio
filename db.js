@@ -154,6 +154,7 @@ var getUser = function(user) {
 
 var addUserSid = function(sid, user) {
     return new Promise(function(resolve, reject) {
+      if(!sid||!user){resolve();}
         dbClient.lpush('user:' + user + ':sids', sid, function(err, reply) {
             if (err) {
                 reject("db error");
@@ -165,6 +166,7 @@ var addUserSid = function(sid, user) {
 
 var removeUserSid = function(sid, user) {
     return new Promise(function(resolve, reject) {
+      if(!sid||!user){resolve();}
         dbClient.lrem('user:' + user + ':sids', 0, sid, function(err, reply) {
             if (err) {
                 reject("db error");
@@ -188,6 +190,7 @@ var getUserSids = function(user) {
 }
 
 var addRoomUser = function(room, user) {
+  if(!room||!user){resolve();}
     return new Promise(function(resolve, reject) {
         dbClient.lpush('room:' + room + ':users', user, function(err, reply) {
             if (err) {
@@ -199,7 +202,9 @@ var addRoomUser = function(room, user) {
 }
 
 var removeRoomUser = function(room, user) {
+
     return new Promise(function(resolve, reject) {
+      if(!room||!user){resolve();}
         dbClient.lrem('room:' + room + ':users', 0, user, function(err, reply) {
             if (err) {
                 reject("db error");
@@ -311,7 +316,7 @@ db.leaveRoom = function(sid) {
         return getSidRoom(sid);
     });
     var pdeletesidroom = pgetsidroom.then(function(result) {
-      console.log("R",result);
+      
         room = result;
         return deleteSidRoom(sid);
     });

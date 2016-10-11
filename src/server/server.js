@@ -10,8 +10,9 @@ var server = require('http').Server(app);
 var Session = require('express-session');
 var rc = require("./rc.js");
 var RedisStore = require('connect-redis')(Session);
+var sessionStore=new RedisStore({client:rc()});
 var session = Session({
-    store: new RedisStore({client:rc()}),
+    store: sessionStore,
     key: 'jsessionid',
     secret: 'simplioSecret',
     resave: true,
@@ -32,13 +33,18 @@ var ps = require("./ps.js");
 //IO
 var socketio = require('socket.io');
 var ios = require('socket.io-express-session');
+var cookieParser=require('socket.io-cookie-parser');
+
+
 var io = socketio.listen(server);
-io.use(ios(session, {
-    autoSave: true
-}));
+var SessionSockets=require('session.socket.io');
+var sessionSockets=new SessionSockets(io,sessionStore,cookieParser,'jsessionid');
+//io.use(cookieParser('simplioSecret'));
+io.use(ios(session));
 
 io.on('connection', function(client) {
     console.log('Client connected ' + client.id);
+    console.log(client.handshake);
     if (!client.handshake.session) {
         console.log('Client session error ' + client.id);
         return;
@@ -82,7 +88,7 @@ io.on('connection', function(client) {
 //DB
 
 db.onNameAttribued = function(sids, name) {
-    console.log("nameAttribued", sids, name);
+    console.log("nameAttribued", name);
     for (sid of sids) {
         var s = io.sockets.connected[sid];
         if (!s || !s.handshake.session) {
