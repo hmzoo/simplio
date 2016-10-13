@@ -1,7 +1,9 @@
 var cfEnv = require("cfenv");
 var appEnv = cfEnv.getAppEnv();
-var ridserver= (Math.floor(Math.random() * 900) + 100).toString();
-
+var ridserver = (Math.floor(Math.random() * 900) + 100).toString();
+var clog = function(act, t) {
+    console.log(ridserver, act, t);
+}
 
 var express = require('express');
 var helmet = require('helmet');
@@ -11,22 +13,15 @@ var server = require('http').Server(app);
 var Session = require('express-session');
 var rc = require("./rc.js");
 var RedisStore = require('connect-redis')(Session);
-var sessionStore=new RedisStore({client:rc()});
-var session = Session({
-    store: sessionStore,
-    key: 'JSESSIONID',
-    secret: 'simplioSecret',
-    resave: true,
-    saveUninitialized: true
-});
+var sessionStore = new RedisStore({client: rc()});
+var session = Session({store: sessionStore, key: 'JSESSIONID', secret: 'simplioSecret', resave: true, saveUninitialized: true});
 
 app.use(helmet());
 app.use(session);
 app.use(express.static(__dirname + '/dist'));
 
-
 server.listen(appEnv.port);
-console.log("Server started, listening on "+appEnv.bind+" port: " +appEnv.port+" ...");
+clog("Server started", "listening on " + appEnv.bind + " port: " + appEnv.port + " ...");
 
 var db = require("./db.js");
 var ps = require("./ps.js");
@@ -34,17 +29,16 @@ var ps = require("./ps.js");
 //IO
 var socketio = require('socket.io');
 var ios = require('socket.io-express-session');
-var cookieParser=require('socket.io-cookie-parser');
-
+//var cookieParser=require('socket.io-cookie-parser');
 
 var io = socketio.listen(server);
-var SessionSockets=require('session.socket.io');
+var SessionSockets = require('session.socket.io');
 //var sessionSockets=new SessionSockets(io,sessionStore,cookieParser,'jsessionid');
 //io.use(cookieParser('simplioSecret'));
 io.use(ios(session));
 
 io.on('connection', function(client) {
-    console.log('Client connected ' + client.id);
+    clog('CL:Client connected', client.id);
     /*
     console.log('----------------');
     console.log(ridserver);
@@ -53,22 +47,23 @@ io.on('connection', function(client) {
     console.log('----------------');
     */
     if (!client.handshake.session) {
-        console.log('Client session error ' + client.id);
+        clog('CL:Client session error', client.id);
         return;
     }
+    checksids();
 
     client.on('disconnect', function() {
-        console.log('Client disconnected ' + client.id);
+        clog('CL:Client disconnected', client.id);
         db.leave(client.id);
     });
 
     client.on('nameRequest', function(name) {
-        console.log('Name request from' + client.id);
+        clog('CL:Name request from', client.id);
         if (!client.handshake.session.user) {
             db.join(client.id);
             return;
         }
-        console.log("updating client " + client.handshake.session.user);
+        clog("CL:updating client ", client.handshake.session.user);
         db.joinagain(client.id, client.handshake.session.user);
 
     });
@@ -78,24 +73,32 @@ io.on('connection', function(client) {
             return;
         }
         db.joinRoom(client.id, data.room);
-        console.log('Room request from' + client.id + ":" + data.room);
+        clog('CL:Room request', 'from' + client.id + ":" + data.room);
     });
 
     client.on('roomMessage', function(data) {
         if (!data || !data.message) {
             return;
         }
-        db.roomMessage(client.id,data.message);
-        console.log('Room message from' + client.id + ":" + data.message);
+        db.roomMessage(client.id, data.message);
+        clog('CL:Room message', 'from' + client.id + ":" + data.message);
     });
 
 });
+//TIMER
+var checksids = function() {
+//  console.log(io.sockets.connected);
+  if(io.sockets.connected===undefined){return;}
+    for (s in io.sockets.connected) {
+        clog("socket", s,io.sockets.connected[s].connected);
+    }
 
+}
 
 //DB
 
 db.onNameAttribued = function(sids, name) {
-    console.log("nameAttribued", name);
+   clog("DB:nameAttribued", name);
     for (sid of sids) {
         var s = io.sockets.connected[sid];
         if (!s || !s.handshake.session) {
@@ -103,14 +106,12 @@ db.onNameAttribued = function(sids, name) {
         }
         s.handshake.session.user = name;
         s.handshake.session.save();
-        s.emit("nameAttribued", {
-            name: name
-        });
+        s.emit("nameAttribued", {name: name});
     }
 }
 
 db.onUserJoin = function(sid, room, name, users) {
-    console.log("userJoin", room, name);
+    clog("DB:userJoin", room + " " + name);
     var s = io.sockets.connected[sid];
     if (!s || !s.handshake.session) {
         return;
@@ -120,37 +121,50 @@ db.onUserJoin = function(sid, room, name, users) {
         room: room,
         users: users
     });
-    ps.pub("userJoin",{name:name,room:room});
+    ps.pub("userJoin", {
+        name: name,
+        room: room
+    });
 
 }
 db.onUserLeave = function(sid, room, name) {
-    console.log("userLeave", room, name);
+    clog("DB:userLeave", room + ' ' + name);
     var s = io.sockets.connected[sid];
     if (s) {
         s.leave(room);
     }
-    ps.pub("userLeave",{name:name,room:room});
+    ps.pub("userLeave", {
+        name: name,
+        room: room
+    });
 
 }
-db.onRoomMessage = function( room, name,message) {
+db.onRoomMessage = function(room, name, message) {
 
-    ps.pub("roomMessage",{name:name,room:room,message:message});
+    ps.pub("roomMessage", {
+        name: name,
+        room: room,
+        message: message
+    });
 
 }
-
-
 
 //PUBSUB
 
 ps.on("roomMessage", function(data) {
-  console.log("roomMessage",data);
-    io.sockets.in(data.room).emit("roomMessage", {name:data.name,message:data.message});
+    clog("PS:roomMessage", data);
+    io.sockets. in(data.room).emit("roomMessage", {
+        name: data.name,
+        message: data.message
+    });
 });
 ps.on("userJoin", function(data) {
-  console.log("userJoin",data);
-    io.sockets.in(data.room).emit("userJoin", {name:data.name});
+    clog("PS:userJoin", data);
+    io.sockets. in(data.room).emit("userJoin", {name: data.name});
 });
 ps.on("userLeave", function(data) {
-  console.log("userLeave",data);
-    io.sockets.in(data.room).emit("userLeave", {name:data.name});
+    clog("PS:userLeave", data);
+    io.sockets. in(data.room).emit("userLeave", {name: data.name});
 });
+
+//TOOLS

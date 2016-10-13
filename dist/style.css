@@ -7015,6 +7015,7 @@ input[type="submit"].btn-round {
 }
 #messages {
   height: 200px;
+  overflow: hidden;
 }
 #userslist {
   height: 200px;
