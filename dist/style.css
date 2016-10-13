@@ -7010,8 +7010,19 @@ input[type="submit"].btn-round {
     width: 91.6666666% !important;
   }
 }
+h1 {
+  font-family: 'Open Sans', sans-serif;
+  color: #666677;
+}
+.username {
+  color: #FFFFFF;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: bold;
+  background-color: #DDDDDD;
+  font-size: 28px;
+}
 .bord {
-  border: 2px #BBDDFF dashed;
+  border: 1px #BBDDFF dashed;
 }
 #messages {
   height: 200px;
