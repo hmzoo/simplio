@@ -45,11 +45,13 @@ io.use(ios(session));
 
 io.on('connection', function(client) {
     console.log('Client connected ' + client.id);
+    /*
     console.log('----------------');
     console.log(ridserver);
     console.log('----------------');
     console.log(client.handshake.headers);
     console.log('----------------');
+    */
     if (!client.handshake.session) {
         console.log('Client session error ' + client.id);
         return;

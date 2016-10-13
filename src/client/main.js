@@ -25,6 +25,7 @@ socket.on('nameAttribued', function(data) {
 socket.on('roomMessage', function(data) {
   if(!data||!data.name||!data.message){return;}
     newMessage(data.name,data.message);
+    addUser(data.name);
 });
 socket.on('roomJoined', function(data) {
   if(!data||!data.room){return;}

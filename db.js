@@ -4,6 +4,8 @@ var rc = require("./rc.js");
 //Promise.promisifyAll(redis.Multi.prototype);
 var dbClient = rc();
 
+var kttl=60*60*48;
+
 var db = {};
 
 var getRName = function(cpt) {
@@ -41,7 +43,7 @@ var getRName = function(cpt) {
 var setSid = function(sid, name) {
 
     return new Promise(function(resolve, reject) {
-        dbClient.set('sid:' + sid, name, function(err, reply) {
+        dbClient.setex('sid:' + sid,kttl, name, function(err, reply) {
             if (err) {
                 reject("db error");
             };
@@ -56,7 +58,7 @@ var setSid = function(sid, name) {
 
 var setSidRoom = function(sid, room) {
     return new Promise(function(resolve, reject) {
-        dbClient.set('sid:' + sid + ":room", room, function(err, reply) {
+        dbClient.setex('sid:' + sid + ":room",kttl, room, function(err, reply) {
             if (err) {
                 reject("db error");
             }
@@ -127,6 +129,7 @@ var setUser = function(name, data) {
                 reject("db error");
             };
             if (reply == "OK") {
+              dbClient.expire('user:' + name,kttl);
                 resolve(name);
             } else {
                 reject("user:" + user + " not saved");
@@ -159,6 +162,7 @@ var addUserSid = function(sid, user) {
             if (err) {
                 reject("db error");
             }
+            dbClient.expire('user:' + user + ':sids',kttl);
             resolve(reply);
         });
     });
@@ -196,6 +200,7 @@ var addRoomUser = function(room, user) {
             if (err) {
                 reject("db error");
             }
+
             resolve(reply);
         });
     });
@@ -316,7 +321,7 @@ db.leaveRoom = function(sid) {
         return getSidRoom(sid);
     });
     var pdeletesidroom = pgetsidroom.then(function(result) {
-      
+
         room = result;
         return deleteSidRoom(sid);
     });
