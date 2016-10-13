@@ -1,5 +1,6 @@
 var cfEnv = require("cfenv");
 var appEnv = cfEnv.getAppEnv();
+var ridserver= (Math.floor(Math.random() * 900) + 100).toString();
 
 
 var express = require('express');
@@ -13,7 +14,7 @@ var RedisStore = require('connect-redis')(Session);
 var sessionStore=new RedisStore({client:rc()});
 var session = Session({
     store: sessionStore,
-    key: 'jsessionid',
+    key: 'JSESSIONID',
     secret: 'simplioSecret',
     resave: true,
     saveUninitialized: true
@@ -38,13 +39,17 @@ var cookieParser=require('socket.io-cookie-parser');
 
 var io = socketio.listen(server);
 var SessionSockets=require('session.socket.io');
-var sessionSockets=new SessionSockets(io,sessionStore,cookieParser,'jsessionid');
+//var sessionSockets=new SessionSockets(io,sessionStore,cookieParser,'jsessionid');
 //io.use(cookieParser('simplioSecret'));
 io.use(ios(session));
 
 io.on('connection', function(client) {
     console.log('Client connected ' + client.id);
-    console.log(client.handshake);
+    console.log('----------------');
+    console.log(ridserver);
+    console.log('----------------');
+    console.log(client.handshake.headers);
+    console.log('----------------');
     if (!client.handshake.session) {
         console.log('Client session error ' + client.id);
         return;

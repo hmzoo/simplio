@@ -77,7 +77,7 @@ var SimpleChat = React.createClass({
         this.setState({roomInputValue: ''});
     },
     onChangeMessageInput: function(e) {
-        this.setState({messageInputValue: e.target.value.trim()});
+        this.setState({messageInputValue: e.target.value});
     },
     handleSubmitMessageForm: function(e) {
         e.preventDefault();
