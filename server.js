@@ -11,7 +11,7 @@ var app = express();
 var server = require('http').Server(app);
 
 var Session = require('express-session');
-var rc = require("./rc.js");
+var rc = require("./lib/rc.js");
 var RedisStore = require('connect-redis')(Session);
 var sessionStore = new RedisStore({client: rc()});
 var session = Session({store: sessionStore, key: 'JSESSIONID', secret: 'simplioSecret', resave: true, saveUninitialized: true});
@@ -23,8 +23,9 @@ app.use(express.static(__dirname + '/dist'));
 server.listen(appEnv.port);
 clog("Server started", "listening on " + appEnv.bind + " port: " + appEnv.port + " ...");
 
-var db = require("./db.js");
-var ps = require("./ps.js");
+var lg = require("./lib/lg.js");
+var db = require("./lib/db.js");
+var ps = require("./lib/ps.js");
 
 //IO
 var socketio = require('socket.io');
@@ -125,6 +126,11 @@ db.onUserJoin = function(sid, room, name, users) {
         name: name,
         room: room
     });
+    var ip=s.request.headers['x-forwarded-for'] ? s.request.headers['x-forwarded-for'].split(",")[0].trim() : s.handshake.address;
+    var logdatas=ip+"|"+s.request.headers['user-agent']+"|"+s.request.headers['accept-language'];
+    lg.setLog(room,name,logdatas);
+    clog("LG:LOG",logdatas);
+    //clog("LG:LOG",s.request.headers);
 
 }
 db.onUserLeave = function(sid, room, name) {

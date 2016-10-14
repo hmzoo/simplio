@@ -27,7 +27,10 @@ gulp.task('less', function() {
 gulp.task('client', function() {
     return browserify({entries: ['./src/client/main.js'], transform: [reactify], debug: true}).bundle().pipe(source('main.js')).pipe(gulp.dest('./dist')).pipe(browserSync.stream());
 });
-gulp.task('server', function() {
+gulp.task('server_lib', function() {
+    return gulp.src('src/server/lib/*.js').pipe(gulp.dest('./lib'));
+});
+gulp.task('server',['server_lib'], function() {
     return gulp.src('src/server/*.js').pipe(gulp.dest('./'));
 });
 gulp.task('build-client', [
@@ -49,7 +52,7 @@ gulp.task('watch', ['build'], function() {
     gulp.watch([
         "./src/client/*.js", "./src/client/views/*.jsx"
     ], ['client']);
-    gulp.watch("./src/server/*.js", ['server']);
+    gulp.watch(["./src/server/*.js","src/server/lib/*.js"], ['server']);
 
 });
 
