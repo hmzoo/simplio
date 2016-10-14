@@ -31,6 +31,8 @@ var SimpleChat = React.createClass({
         this.setState({roomName: room});
         if (this.state.roomName != '') {
             this.setState({roomReady: true});
+        } else {
+            this.setState({roomReady: false});
         }
     },
     setUserName: function(user) {
@@ -76,6 +78,10 @@ var SimpleChat = React.createClass({
         this.props.onSubmitRoomForm(this.state.roomInputValue);
         this.setState({roomInputValue: ''});
     },
+    handleLeaveRoomBtn: function(e) {
+        this.props.onSubmitRoomForm('');
+        this.cleanRoom();
+    },
     onChangeMessageInput: function(e) {
         this.setState({messageInputValue: e.target.value});
     },
@@ -92,23 +98,11 @@ var SimpleChat = React.createClass({
             return (
                 <div>
                     <div className="grid">
-                        <div className="grid-item 8/12 bord">
-                            <div id="roomTitle">
-                                <h4>{this.state.roomName}</h4>
+                        <div className="grid-item 12/12 bord">
+                            <div className="fr">
+                                <button onClick={this.handleLeaveRoomBtn} className="btn  btn-xs ">leave</button>
                             </div>
-                        </div>
-                        <div className="grid-item 4/12 bord">
-
-                            <div className="grid gutter-0 " id="joinroom">
-                                <form action="" onSubmit={this.handleSubmitRoomForm}>
-                                    <div className="grid-item 8/12 bord">
-                                        <input id="roominput" className="form-input wrapper" type="text" placeholder="Room name" onChange={this.onChangeRoomInput} value={this.state.roomInputValue}></input>
-                                    </div>
-                                    <div className="grid-item 4/12 bord">
-                                        <button type="submit" className="btn  btn-primary wrapper ">join</button>
-                                    </div>
-                                </form>
-                            </div>
+                            <div className="roomtitle wrapper wrapper-flush">{this.state.roomName}</div>
                         </div>
                     </div>
 
@@ -136,11 +130,11 @@ var SimpleChat = React.createClass({
                     <div className="grid bord">
                         <form action="" onSubmit={this.handleSubmitMessageForm} autoComplete="off">
                             <div className="grid-item 2/12 bord dn md-dib">
-                              <div className="wrapper">
-                                <div className="username tc ">
-                                    {this.state.userName}
+                                <div className="wrapper">
+                                    <div className="username tc ">
+                                        {this.state.userName}
+                                    </div>
                                 </div>
-                              </div>
                             </div>
                             <div className="grid-item 10/12 md-8/12 bord">
 
@@ -169,18 +163,20 @@ var SimpleChat = React.createClass({
             return (
                 <div>
                     <div>
-                        <h1 className="wrapper tc">Join a room
+                        <h1 className="wrapper tc mv">Join a room
                         </h1>
                     </div>
                     <div className="bord">
-                        <div className="wrapper md-6/12 bord">
+                        <div className="wrapper lg-5/12 bord">
                             <div className="grid gutter-0 " id="joinroom">
                                 <form action="" onSubmit={this.handleSubmitRoomForm}>
-                                    <div className="grid-item 9/12 bord">
-                                        <input id="msginput" className="form-input wrapper" type="text" placeholder="Room name" onChange={this.onChangeRoomInput} value={this.state.roomInputValue}></input>
+                                    <div className="grid-item  bord">
+                                        <input id="msginput" className="form-input wrapper tc" type="text" placeholder="Room name" onChange={this.onChangeRoomInput} value={this.state.roomInputValue}></input>
                                     </div>
-                                    <div className="grid-item 3/12 bord">
-                                        <button type="submit" className="btn  btn-primary wrapper ">join</button>
+                                    <div className="grid-item   bord tc">
+
+                                        <button type="submit" className="btn  btn-primary 5/12 mv+">join</button>
+
                                     </div>
                                 </form>
                             </div>
