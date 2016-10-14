@@ -1,4 +1,6 @@
 var React = require('react');
+var Scroll = require('react-scroll');
+var scroll = Scroll.animateScroll;
 
 var MessageItem = React.createClass({
     render: function() {
@@ -91,6 +93,14 @@ var SimpleChat = React.createClass({
         this.props.onSubmitMessageForm(this.state.messageInputValue);
         this.setState({messageInputValue: ''});
     },
+    msgBox: function(){
+      return (
+        <div id="messages">
+            {this.state.messages.map(function(result) {
+                return (<MessageItem key={result.id} user={result.user} content={result.content}/>);
+            })}
+        </div>
+    );},
 
     render: function() {
 
@@ -108,11 +118,7 @@ var SimpleChat = React.createClass({
 
                     <div className="grid">
                         <div className="grid-item 10/12 bord">
-                            <div id="messages">
-                                {this.state.messages.map(function(result) {
-                                    return (<MessageItem key={result.id} user={result.user} content={result.content}/>);
-                                })}
-                            </div>
+                            {this.msgBox()}
                         </div>
                         <div className="grid-item 2/12 bord">
                             <div id="userslist">
