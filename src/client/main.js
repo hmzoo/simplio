@@ -1,8 +1,22 @@
+var queryString = require('query-string');
+var cipher = require('simple-cipher');
 var React = require('react');
-var SimpleChat= require('./views/simplechat.jsx');
+var App= require('./views/app.jsx');
 var socket = io.connect();
 var userName='';
 var roomName='';
+
+var TAFFY = require('taffy');
+var users=TAFFY();
+
+
+if(location.hash){
+  try{
+   roomName=cipher.decrypt(location.hash.substr(1),'AcatInAhat');
+  }catch (e){
+    console.log(e);
+  }
+}
 
 socket.on('connect', function() {
     console.log('Connected successfully to the socket.io server.');
@@ -13,7 +27,6 @@ socket.on('connect', function() {
 });
 socket.on('disconnect', function() {
     console.log('Socket.io server disconnected ');
-    cleanRoom();
     setInfos("Disconnected ...");
 });
 
@@ -30,13 +43,18 @@ socket.on('roomMessage', function(data) {
 socket.on('roomJoined', function(data) {
   if(!data||!data.room){return;}
   console.log("Room joined : "+data.room);
-  cleanRoom();
     setRoomName(data.room);
     if(data.users){
       for (u of data.users) {
         addUser(u);
       }
     }
+});
+socket.on('roomLeft', function(data) {
+
+  console.log("Room left");
+    setRoomName('');
+
 });
 socket.on('userJoin', function(data) {
   if(!data||!data.name){return;}
@@ -48,47 +66,46 @@ socket.on('userLeave', function(data) {
 });
 
 
-test=function(){
-  console.log("TEST");
-  simpleChat.setRoomName("OK");
-  simpleChat.setUserName("20222");
-  simpleChat.newMessage("33445","Hello");
-  simpleChat.addUser("33333");
-  simpleChat.removeUser("12345");
-}
+
 var setUserName=function(t){
   if(t==userName){return;}
   userName=(t);
-  simpleChat.setUserName(t);
+  app.setUserName(t);
 
 }
 var setInfos=function(t){
 
-  simpleChat.setInfos(t);
+  app.setInfos(t);
 }
 var setRoomName=function(t){
   roomName=(t);
-  simpleChat.setRoomName(t);
+  app.setRoomName(t);
+  app.setEncRoomName(cipher.encrypt(t,'AcatInAhat'));
 }
 var newMessage=function(u,t){
-  simpleChat.newMessage(u,t);
+  app.newMessage(u,t);
 }
-var cleanRoom=function(){
-  simpleChat.cleanRoom();
+var clean=function(){
+  app.clean();
 }
 var addUser=function(u){
-  simpleChat.addUser(u);
+  users.insert({id:u,infos:"OK"});
+  console.log(users.get());
+  app.addUser(u);
 }
 var removeUser=function(u){
-  simpleChat.removeUser(u);
+  app.removeUser(u);
 }
-
-var onSubmitRoomForm=function(t){
+var onLeave=function(){
+  console.log("leave");
+  socket.emit('roomRequest',{room:''});
+}
+var onSubmitRoom=function(t){
   socket.emit('roomRequest',{room:t});
 }
-var onSubmitMessageForm=function(t){
+var onSubmitMessage=function(t){
   socket.emit('roomMessage',{message:t});
 }
 
-var simpleChat = ReactDOM.render(
-  <SimpleChat onSubmitRoomForm={onSubmitRoomForm} onSubmitMessageForm={onSubmitMessageForm}/>, document.getElementById('simplechat'));
+var app = ReactDOM.render(
+  <App  onSubmitMessage={onSubmitMessage} onSubmitRoom={onSubmitRoom} onLeave={onLeave}/>, document.getElementById('app'));

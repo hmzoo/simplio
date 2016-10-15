@@ -13,15 +13,21 @@ var MessageItem = React.createClass({
 
 module.exports = React.createClass({
     getInitialState: function() {
-        return {locked: false};
+        return { locked: false};
     },
+
+
     lock: function() {
         console.log("lock");
         this.setState({locked: true})
     },
     unlock: function() {
         console.log("unlock");
-        this.setState({locked: false},function(){this.scroll();});
+        this.setState({
+            locked: false
+        }, function() {
+            this.scroll();
+        });
 
     },
 
@@ -40,7 +46,6 @@ module.exports = React.createClass({
 
     componentDidUpdate: function(prevProps, prevState) {
         if (prevProps.messages.length != this.props.messages.length) {
-            console.log("OK");
             this.scroll();
         }
     },

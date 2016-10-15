@@ -70,8 +70,11 @@ io.on('connection', function(client) {
     });
 
     client.on('roomRequest', function(data) {
-        if (!data || !data.room) {
+        if (!data ) {
             return;
+        }
+        if(!data.room){
+          data.room='';
         }
         db.joinRoom(client.id, data.room);
         clog('CL:Room request', 'from' + client.id + ":" + data.room);
@@ -112,11 +115,13 @@ db.onNameAttribued = function(sids, name) {
 }
 
 db.onUserJoin = function(sid, room, name, users) {
+
     clog("DB:userJoin", room + " " + name);
     var s = io.sockets.connected[sid];
     if (!s || !s.handshake.session) {
         return;
     }
+    if(room==''){ s.emit("roomLeft", {});return;}
     s.join(room);
     s.emit("roomJoined", {
         room: room,
