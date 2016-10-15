@@ -1,17 +1,7 @@
 var React = require('react');
-var Scroll = require('react-scroll');
-var scroll = Scroll.animateScroll;
+var MsgBox=require('./msgbox.jsx');
 
-var MessageItem = React.createClass({
-    render: function() {
-        return (
-            <div className="grid">
-                <div className="grid-item 1/12 useritem">{this.props.user}</div>
-                <div className="grid-item 11/12">{this.props.content}</div>
-            </div>
-        );
-    }
-});
+
 
 var SimpleChat = React.createClass({
     getInitialState: function() {
@@ -93,14 +83,6 @@ var SimpleChat = React.createClass({
         this.props.onSubmitMessageForm(this.state.messageInputValue);
         this.setState({messageInputValue: ''});
     },
-    msgBox: function(){
-      return (
-        <div id="messages">
-            {this.state.messages.map(function(result) {
-                return (<MessageItem key={result.id} user={result.user} content={result.content}/>);
-            })}
-        </div>
-    );},
 
     render: function() {
 
@@ -118,7 +100,7 @@ var SimpleChat = React.createClass({
 
                     <div className="grid">
                         <div className="grid-item 10/12 bord">
-                            {this.msgBox()}
+                            <MsgBox messages={this.state.messages}/>
                         </div>
                         <div className="grid-item 2/12 bord">
                             <div id="userslist">
