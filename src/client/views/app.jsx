@@ -52,6 +52,9 @@ module.exports = React.createClass({
         }
 
     },
+    setUsers:function(users){
+      this.setState({users: users});
+    },
     render: function() {
 
         if (this.state.roomName == '') {

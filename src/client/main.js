@@ -6,8 +6,12 @@ var socket = io.connect();
 var userName='';
 var roomName='';
 
-var TAFFY = require('taffy');
-var users=TAFFY();
+var users=require('./tabdb.js');
+users.onUpdated=function(tab){
+  console.log(tab);
+  console.log(users.index);
+  app.setUsers(tab);
+}
 
 
 if(location.hash){
@@ -20,88 +24,51 @@ if(location.hash){
 
 socket.on('connect', function() {
     console.log('Connected successfully to the socket.io server.');
-    socket.emit('nameRequest');
+    socket.emit('join');
     if(roomName){
-      socket.emit('roomRequest',{room:roomName});
+      socket.emit('joinRoom',roomName);
     }
 });
 socket.on('disconnect', function() {
     console.log('Socket.io server disconnected ');
-    setInfos("Disconnected ...");
+    app.setInfos("Disconnected ...");
 });
 
-socket.on('nameAttribued', function(data) {
-
-  if(!data||!data.name){return;}
-    setUserName(data.name);
+socket.on('joined', function(data) {
+  if(!data){return;}
+  userName=data;
+  app.setUserName(data);
 });
 socket.on('roomMessage', function(data) {
-  if(!data||!data.name||!data.message){return;}
-    newMessage(data.name,data.message);
-    addUser(data.name);
+  if(!data||!data.user||!data.message){return;}
+    users.add(data.user,{name:data.user});
+    app.newMessage(data.user,data.message);
+
 });
 socket.on('roomJoined', function(data) {
-  if(!data||!data.room){return;}
-  console.log("Room joined : "+data.room);
-    setRoomName(data.room);
-    if(data.users){
-      for (u of data.users) {
-        addUser(u);
-      }
-    }
+  //if(!data){return;}
+  console.log("Room joined : "+data);
+  roomName=data;
+  app.setRoomName(data);
+  app.setEncRoomName(cipher.encrypt(data,'AcatInAhat'));
 });
-socket.on('roomLeft', function(data) {
 
-  console.log("Room left");
-    setRoomName('');
-
-});
 socket.on('userJoin', function(data) {
-  if(!data||!data.name){return;}
-    addUser(data.name);
+  if(!data){return;}
+    users.add(data,{name:data});
 });
 socket.on('userLeave', function(data) {
-  if(!data||!data.name){return;}
-    removeUser(data.name);
+  if(!data){return;}
+    users.del(data.user);
 });
 
-
-
-var setUserName=function(t){
-  if(t==userName){return;}
-  userName=(t);
-  app.setUserName(t);
-
-}
-var setInfos=function(t){
-
-  app.setInfos(t);
-}
-var setRoomName=function(t){
-  roomName=(t);
-  app.setRoomName(t);
-  app.setEncRoomName(cipher.encrypt(t,'AcatInAhat'));
-}
-var newMessage=function(u,t){
-  app.newMessage(u,t);
-}
-var clean=function(){
-  app.clean();
-}
-var addUser=function(u){
-  users.insert({id:u,infos:"OK"});
-  console.log(users.get());
-  app.addUser(u);
-}
-var removeUser=function(u){
-  app.removeUser(u);
-}
+// EVENTS
 var onLeave=function(){
   console.log("leave");
-  socket.emit('roomRequest',{room:''});
+  socket.emit('joinRoom','');
 }
 var onSubmitRoom=function(t){
-  socket.emit('roomRequest',{room:t});
+  socket.emit('joinRoom',t);
 }
 var onSubmitMessage=function(t){
   socket.emit('roomMessage',{message:t});

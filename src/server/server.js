@@ -11,9 +11,9 @@ var app = express();
 var server = require('http').Server(app);
 
 var Session = require('express-session');
-var rc = require("./lib/rc.js");
+var dbClient = require("./lib/rc.js").newClient();
 var RedisStore = require('connect-redis')(Session);
-var sessionStore = new RedisStore({client: rc()});
+var sessionStore = new RedisStore({client: dbClient});
 var session = Session({store: sessionStore, key: 'JSESSIONID', secret: 'simplioSecret', resave: true, saveUninitialized: true});
 
 app.use(helmet());
@@ -25,6 +25,7 @@ clog("Server started", "listening on " + appEnv.bind + " port: " + appEnv.port +
 
 var lg = require("./lib/lg.js");
 var db = require("./lib/db.js");
+var maindb = require("./lib/maindb.js");
 var ps = require("./lib/ps.js");
 
 //IO
@@ -55,46 +56,76 @@ io.on('connection', function(client) {
 
     client.on('disconnect', function() {
         clog('CL:Client disconnected', client.id);
-        db.leave(client.id);
+        maindb.leave(client.id).then(function(result) {
+            ps.pub("userLeave", {
+                user: result.user,
+                room: result.room
+            });
+
+        });
     });
 
-    client.on('nameRequest', function(name) {
-        clog('CL:Name request from', client.id);
+    client.on('join', function() {
+        var s = io.sockets.connected[client.id];
         if (!client.handshake.session.user) {
-            db.join(client.id);
-            return;
+            maindb.join(client.id).then(function(result) {
+                s.handshake.session.user = result;
+                s.handshake.session.save();
+                s.emit('joined', result);
+            });
+
+        } else {
+            maindb.rejoin(client.id, client.handshake.session.user).then(function(result) {
+                s.handshake.session.user = result;
+                s.handshake.session.save();
+                s.emit('joined', result);
+            });
         }
-        clog("CL:updating client ", client.handshake.session.user);
-        db.joinagain(client.id, client.handshake.session.user);
 
     });
 
-    client.on('roomRequest', function(data) {
-        if (!data ) {
-            return;
-        }
-        if(!data.room){
-          data.room='';
-        }
-        db.joinRoom(client.id, data.room);
-        clog('CL:Room request', 'from' + client.id + ":" + data.room);
+    client.on('joinRoom', function(room) {
+      clog("CLT","joinroom "+room);
+        var s = io.sockets.connected[client.id];
+        maindb.joinRoom(client.id, room).then(function(result) {
+            if (result.oldroom) {
+                s.leave(result.oldroom);
+                ps.pub("userLeave", {
+                    user: result.user,
+                    room: result.oldroom
+                });
+            }
+            s.join(result.room);
+            s.emit('roomJoined', result.room);
+            ps.pub("userJoin", {
+                user: result.user,
+                room: result.room
+            });
+        });
+
     });
 
-    client.on('roomMessage', function(data) {
-        if (!data || !data.message) {
-            return;
-        }
-        db.roomMessage(client.id, data.message);
-        clog('CL:Room message', 'from' + client.id + ":" + data.message);
+    client.on('roomMessage', function(message) {
+        maindb.hbsid(client.id).then(function(result) {
+            ps.pub("roomMessage", {
+                user: result.user,
+                room: result.room,
+                message: result.message
+            });
+
+        });
+
     });
 
 });
 //TIMER
 var checksids = function() {
-//  console.log(io.sockets.connected);
-  if(io.sockets.connected===undefined){return;}
+    //  console.log(io.sockets.connected);
+    if (io.sockets.connected === undefined) {
+        return;
+    }
     for (s in io.sockets.connected) {
-        clog("socket", s,io.sockets.connected[s].connected);
+        clog("socket", s, io.sockets.connected[s].connected);
     }
 
 }
@@ -102,7 +133,7 @@ var checksids = function() {
 //DB
 
 db.onNameAttribued = function(sids, name) {
-   clog("DB:nameAttribued", name);
+    clog("DB:nameAttribued", name);
     for (sid of sids) {
         var s = io.sockets.connected[sid];
         if (!s || !s.handshake.session) {
@@ -121,7 +152,10 @@ db.onUserJoin = function(sid, room, name, users) {
     if (!s || !s.handshake.session) {
         return;
     }
-    if(room==''){ s.emit("roomLeft", {});return;}
+    if (room == '') {
+        s.emit("roomLeft", {});
+        return;
+    }
     s.join(room);
     s.emit("roomJoined", {
         room: room,
@@ -131,10 +165,12 @@ db.onUserJoin = function(sid, room, name, users) {
         name: name,
         room: room
     });
-    var ip=s.request.headers['x-forwarded-for'] ? s.request.headers['x-forwarded-for'].split(",")[0].trim() : s.handshake.address;
-    var logdatas=ip+"|"+s.request.headers['user-agent']+"|"+s.request.headers['accept-language'];
-    lg.setLog(room,name,logdatas);
-    clog("LG:LOG",logdatas);
+    var ip = s.request.headers['x-forwarded-for']
+        ? s.request.headers['x-forwarded-for'].split(",")[0].trim()
+        : s.handshake.address;
+    var logdatas = ip + "|" + s.request.headers['user-agent'] + "|" + s.request.headers['accept-language'];
+    lg.setLog(room, name, logdatas);
+    clog("LG:LOG", logdatas);
     //clog("LG:LOG",s.request.headers);
 
 }
@@ -163,19 +199,25 @@ db.onRoomMessage = function(room, name, message) {
 //PUBSUB
 
 ps.on("roomMessage", function(data) {
-    clog("PS:roomMessage", data);
+    if (!data || !data.user || !data.room || !data.message) {
+        return
+    }
     io.sockets. in(data.room).emit("roomMessage", {
-        name: data.name,
+        user: data.user,
         message: data.message
     });
 });
 ps.on("userJoin", function(data) {
-    clog("PS:userJoin", data);
-    io.sockets. in(data.room).emit("userJoin", {name: data.name});
+    if (!data || !data.user || !data.room) {
+        return
+    }
+    io.sockets. in(data.room).emit("userJoin", data.user);
 });
 ps.on("userLeave", function(data) {
-    clog("PS:userLeave", data);
-    io.sockets. in(data.room).emit("userLeave", {name: data.name});
+    if (!data || !data.user || !data.room) {
+        return
+    }
+    io.sockets. in(data.room).emit("userLeave", data.user);
 });
 
 //TOOLS

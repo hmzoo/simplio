@@ -26,7 +26,7 @@ module.exports = React.createClass({
                 {this.props.users.map(function(result) {
 
                     return (
-                        <UserItem key={result} userName={result}/>
+                        <UserItem key={result.name} userName={result.name}/>
                     );
                 })}
 

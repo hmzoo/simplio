@@ -3,14 +3,14 @@ var cfEnv = require("cfenv");
 var appEnv = cfEnv.getAppEnv();
 var redisCreds = appEnv.getServiceCreds("redis_instance");
 
-module.exports = function() {
+var rc={};
 
+rc.newClient = function() {
     var client;
     if (redisCreds) {
-        console.log(redisCreds);
         client = redis.createClient(redisCreds.port, redisCreds.hostname);
         client.auth(redisCreds.password, function(err) {
-            if(err){
+            if (err) {
                 throw err;
             }
         });
@@ -20,3 +20,9 @@ module.exports = function() {
     }
     return client;
 }
+var mainClient=rc.newClient();
+rc.getClient=function(){
+  return mainClient;
+}
+
+module.exports = rc;

@@ -1,9 +1,9 @@
-var rc = require('./rc.js');
 
 
 
-var sub = rc();
-var pub = rc();
+
+var sub = require('./rc.js').newClient();
+var pub = require('./rc.js').newClient();
 
 sub.subscribe('iops');
 
