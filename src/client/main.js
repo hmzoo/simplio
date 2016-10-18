@@ -41,8 +41,10 @@ socket.on('joined', function(data) {
 });
 socket.on('roomMessage', function(data) {
   if(!data||!data.user||!data.message){return;}
+  console.log("RM",data.user,data.message);
     users.add(data.user,{name:data.user});
     app.newMessage(data.user,data.message);
+
 
 });
 socket.on('roomJoined', function(data) {
@@ -71,7 +73,7 @@ var onSubmitRoom=function(t){
   socket.emit('joinRoom',t);
 }
 var onSubmitMessage=function(t){
-  socket.emit('roomMessage',{message:t});
+  socket.emit('roomMessage',t);
 }
 
 var app = ReactDOM.render(

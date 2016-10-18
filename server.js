@@ -69,6 +69,9 @@ io.on('connection', function(client) {
         var s = io.sockets.connected[client.id];
         if (!client.handshake.session.user) {
             maindb.join(client.id).then(function(result) {
+              if(!result){
+                s.emit('serverError', "Can't attribute a name");
+              }
                 s.handshake.session.user = result;
                 s.handshake.session.save();
                 s.emit('joined', result);
@@ -110,7 +113,7 @@ io.on('connection', function(client) {
             ps.pub("roomMessage", {
                 user: result.user,
                 room: result.room,
-                message: result.message
+                message: message
             });
 
         });
@@ -130,71 +133,7 @@ var checksids = function() {
 
 }
 
-//DB
 
-db.onNameAttribued = function(sids, name) {
-    clog("DB:nameAttribued", name);
-    for (sid of sids) {
-        var s = io.sockets.connected[sid];
-        if (!s || !s.handshake.session) {
-            return;
-        }
-        s.handshake.session.user = name;
-        s.handshake.session.save();
-        s.emit("nameAttribued", {name: name});
-    }
-}
-
-db.onUserJoin = function(sid, room, name, users) {
-
-    clog("DB:userJoin", room + " " + name);
-    var s = io.sockets.connected[sid];
-    if (!s || !s.handshake.session) {
-        return;
-    }
-    if (room == '') {
-        s.emit("roomLeft", {});
-        return;
-    }
-    s.join(room);
-    s.emit("roomJoined", {
-        room: room,
-        users: users
-    });
-    ps.pub("userJoin", {
-        name: name,
-        room: room
-    });
-    var ip = s.request.headers['x-forwarded-for']
-        ? s.request.headers['x-forwarded-for'].split(",")[0].trim()
-        : s.handshake.address;
-    var logdatas = ip + "|" + s.request.headers['user-agent'] + "|" + s.request.headers['accept-language'];
-    lg.setLog(room, name, logdatas);
-    clog("LG:LOG", logdatas);
-    //clog("LG:LOG",s.request.headers);
-
-}
-db.onUserLeave = function(sid, room, name) {
-    clog("DB:userLeave", room + ' ' + name);
-    var s = io.sockets.connected[sid];
-    if (s) {
-        s.leave(room);
-    }
-    ps.pub("userLeave", {
-        name: name,
-        room: room
-    });
-
-}
-db.onRoomMessage = function(room, name, message) {
-
-    ps.pub("roomMessage", {
-        name: name,
-        room: room,
-        message: message
-    });
-
-}
 
 //PUBSUB
 

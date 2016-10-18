@@ -16,7 +16,7 @@ module.exports = React.createClass({
     },
     setRoomName: function(room) {
      room=room.substr(0,1).toUpperCase() + room.substr(1).toLowerCase();
-        this.setState({roomName: room});
+        this.setState({users: [], messages: [],roomName: room});
     },
     setEncRoomName: function(t) {
   console.log(t);
